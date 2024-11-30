@@ -47,9 +47,6 @@ class _MyHomePageState extends State<MyHomePage> {
   // Set zur Verwaltung der ausgewählten Gespräche
   Set<Conversation> selectedConversations = {};
 
-  // Variable zur Verwaltung des Sidebar-Zustands
-  bool isSidebarOpen = true;
-
   @override
   void dispose() {
     messageController.dispose();
@@ -224,8 +221,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.question_answer,
-                          color: Colors.white70),
+                      const Icon(Icons.question_answer, color: Colors.white70),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
@@ -241,8 +237,7 @@ class _MyHomePageState extends State<MyHomePage> {
             const SizedBox(height: 30),
             Text(
               'Verwendetes Modell: $modelUsed',
-              style:
-                  const TextStyle(fontSize: 16, color: Colors.white70),
+              style: const TextStyle(fontSize: 16, color: Colors.white70),
             ),
           ],
         ),
@@ -251,169 +246,83 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildSidebar() {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      width: isSidebarOpen ? 300 : 70,
+    return Container(
+      width: 300,
       color: Colors.grey[900],
       child: Column(
         children: [
-          // Header mit Toggle-Button ohne Logo
+          // Logo innerhalb des Sidebars
           Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: isSidebarOpen ? 16.0 : 8.0,
-              vertical: 16.0,
-            ),
+            padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                // Nur anzeigen, wenn die Sidebar geöffnet ist
-                if (isSidebarOpen)
-                  const Expanded(
-                    child: Text(
-                      'Gespräche',
-                      style: TextStyle(fontSize: 24),
-                    ),
-                  ),
-                IconButton(
-                  iconSize: 24,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  icon: Icon(
-                    isSidebarOpen ? Icons.arrow_back : Icons.menu,
-                    color: Colors.white,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      isSidebarOpen = !isSidebarOpen;
-                    });
-                  },
+                Image.asset(
+                  'assets/images/logow.png',
+                  height: 40,
                 ),
+                const SizedBox(width: 10),
+                const Text(':GPT', style: TextStyle(fontSize: 24)),
               ],
             ),
           ),
           const Divider(),
-          // Navigationsoptionen
+          ListTile(
+            leading: const Icon(Icons.add),
+            title: const Text('Neues Gespräch'),
+            onTap: _createNewConversation,
+          ),
+          const Divider(),
           Expanded(
             child: ListView.builder(
-              itemCount: conversations.length + 1, // +1 für "Neues Gespräch"
+              itemCount: conversations.length,
               itemBuilder: (context, index) {
-                if (index == 0) {
-                  // "Neues Gespräch" tile
-                  return Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isSidebarOpen ? 16.0 : 8.0,
-                      vertical: 4.0,
-                    ),
-                    child: GestureDetector(
-                      onTap: _createNewConversation,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[800],
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: isSidebarOpen
-                              ? MainAxisAlignment.start
-                              : MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.add, color: Colors.white),
-                            if (isSidebarOpen)
-                              const SizedBox(width: 10),
-                            if (isSidebarOpen)
-                              const Text(
-                                'Neues Gespräch',
-                                style: TextStyle(fontSize: 16),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                }
-                final convo = conversations[index - 1];
+                final convo = conversations[index];
                 bool isSelected = selectedConversations.contains(convo);
-                return Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isSidebarOpen ? 16.0 : 8.0,
-                    vertical: 4.0,
+                return ListTile(
+                  leading: Checkbox(
+                    value: isSelected,
+                    onChanged: (bool? selected) {
+                      setState(() {
+                        if (selected == true) {
+                          selectedConversations.add(convo);
+                        } else {
+                          selectedConversations.remove(convo);
+                        }
+                      });
+                    },
                   ),
-                  child: GestureDetector(
-                    onTap: () => _selectConversation(convo),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? Colors.blueAccent.withOpacity(0.2)
-                            : Colors.grey[800],
-                        borderRadius: BorderRadius.circular(8),
+                  title: Text(convo.title),
+                  selected: selectedConversation == convo,
+                  onTap: () => _selectConversation(convo),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit),
+                        onPressed: () => _renameConversation(convo),
+                        tooltip: 'Gespräch umbenennen',
                       ),
-                      child: Row(
-                        children: [
-                          // Leading Widget
-                          isSidebarOpen
-                              ? Checkbox(
-                                  value: isSelected,
-                                  onChanged: (bool? selected) {
-                                    setState(() {
-                                      if (selected == true) {
-                                        selectedConversations.add(convo);
-                                      } else {
-                                        selectedConversations.remove(convo);
-                                      }
-                                    });
-                                  },
-                                )
-                              : const Icon(
-                                  Icons.chat,
-                                  color: Colors.white70,
-                                ),
-                          const SizedBox(width: 10),
-                          // Title Widget
-                          if (isSidebarOpen)
-                            Expanded(
-                              child: Text(
-                                convo.title,
-                                style: const TextStyle(fontSize: 16),
-                              ),
-                            ),
-                          // Trailing Widgets
-                          if (isSidebarOpen)
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.edit, size: 20),
-                                  onPressed: () => _renameConversation(convo),
-                                  tooltip: 'Gespräch umbenennen',
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete, size: 20),
-                                  onPressed: () {
-                                    _deleteConversations({convo});
-                                  },
-                                  tooltip: 'Gespräch löschen',
-                                ),
-                              ],
-                            ),
-                        ],
+                      IconButton(
+                        icon: const Icon(Icons.delete),
+                        onPressed: () {
+                          _deleteConversations({convo});
+                        },
+                        tooltip: 'Gespräch löschen',
                       ),
-                    ),
+                    ],
                   ),
                 );
               },
             ),
           ),
           // Button zum Löschen ausgewählter Gespräche
-          if (selectedConversations.isNotEmpty && isSidebarOpen)
+          if (selectedConversations.isNotEmpty)
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: ElevatedButton.icon(
                 onPressed: () => _deleteConversations(selectedConversations),
                 icon: const Icon(Icons.delete),
-                label:
-                    Text('Löschen (${selectedConversations.length})'),
+                label: Text('Löschen (${selectedConversations.length})'),
                 style: ElevatedButton.styleFrom(
                   //primary: Colors.redAccent,
                 ),
@@ -440,8 +349,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         Align(
                           alignment: Alignment.centerLeft,
                           child: Container(
-                            margin:
-                                const EdgeInsets.symmetric(vertical: 4),
+                            margin: const EdgeInsets.symmetric(vertical: 4),
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: Colors.grey[800],
@@ -508,13 +416,11 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       // Entferne die AppBar, da das Logo jetzt im Sidebar ist
-      body: SafeArea(
-        child: Row(
-          children: [
-            _buildSidebar(),
-            _buildChatArea(),
-          ],
-        ),
+      body: Row(
+        children: [
+          _buildSidebar(),
+          _buildChatArea(),
+        ],
       ),
     );
   }
